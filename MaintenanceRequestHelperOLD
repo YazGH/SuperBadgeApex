@@ -1,0 +1,35 @@
+    public with sharing class MaintenanceRequestHelper {
+    
+    public static void updateWorkOrders(List<Case> caseList ) {
+      List<Case> newListCases = new List<Case>();
+		  List<Equipment_Maintenance_Item__c> caseList1 = 
+            					[SELECT name, Maintenance_Request__r.CaseNumber, 
+       									Maintenance_Request__r.id, Maintenance_Request__r.Type, 
+                                		Maintenance_Request__r.Status, Maintenance_Request__r.Vehicle__r.name, 
+                                		Maintenance_Request__r.Vehicle__c, 
+       									Equipment__r.name, Equipment__c, Equipment__r.Maintenance_Cycle__c 
+                                 FROM Equipment_Maintenance_Item__c  
+                                 WHERE Maintenance_Request__r.id IN :caseList 
+                                 		and Maintenance_Request__r.Status ='Closed' 
+                                	  	and (Maintenance_Request__r.Type='Repair' 
+                                             or 
+                                           	Maintenance_Request__r.Type='Routine Maintenance')
+                                ];
+           
+        for (Equipment_Maintenance_Item__c a : caseList1) {
+         
+        	newListCases.add(new Case(Subject='New maintenance case '+a.id,
+                                      Type = 'Routine Maintenance',
+                                      Date_Reported__c = System.Today(),
+                                      Vehicle__c = a.Maintenance_Request__r.Vehicle__c,
+									  ProductId = a.Equipment__c,
+                                      Date_Due__c = System.Today()+numDias.intValue()
+                             )); 
+    	}
+    
+        if (newListCases.size() > 0) {
+           insert newListCases;
+        } 
+        
+   }
+  }
