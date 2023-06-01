@@ -1,0 +1,119 @@
+public with sharing class MaintenanceRequestHelper {
+    
+    public static void updateWorkOrders(Map<Id,Case> newCases, Map<Id,Case> oldCases) {
+        Map<Id,Case> lstCasesClosed = new Map<Id,Case>();
+                
+        for(Case c: newCases.values()){
+            if(oldCases != null && oldCases.get(c.Id) != null && c.Status != oldCases.get(c.Id).Status && c.Status == 'Closed'){
+                lstCasesClosed.put(c.Id, c);
+            }
+        }
+        
+        AggregateResult[] mins = [SELECT Maintenance_Request__c, MIN(Equipment__r.Maintenance_Cycle__c) Minimun 
+                                  FROM Equipment_Maintenance_Item__c 
+                                  WHERE Maintenance_Request__c IN:lstCasesClosed.keySet() 
+                                  GROUP BY Maintenance_Request__c];
+        
+        Map<Id,Case> lstAutoCases = new Map<Id,Case>();
+        for(AggregateResult min : mins){
+            Case newAutoCase = new Case();
+            newAutoCase.Type = 'Routine Maintenance'; 
+            newAutoCase.Status = 'New'; 
+            newAutoCase.Subject = 'Automatic Case Schedule'; 
+            newAutoCase.Date_Reported__c = System.today(); 
+            newAutoCase.Date_Due__c = System.today().addDays(Integer.valueOf(min.get('Minimun'))); 
+            newAutoCase.Vehicle__c = lstCasesClosed.get(String.valueOf(min.get('Maintenance_Request__c'))).Vehicle__c; 
+            newAutoCase.Priority = 'Medium';   
+            lstAutoCases.put(lstCasesClosed.get(String.valueOf(min.get('Maintenance_Request__c'))).Id,newAutoCase);
+        }
+        
+        //inserto el nuevo caso
+        if(lstAutoCases != null && lstAutoCases.values().size() > 0){
+           insert lstAutoCases.values();
+        }
+        
+        List<Equipment_Maintenance_Item__c> oldEquipment = [SELECT Equipment__c, Maintenance_Request__c, Quantity__c 
+                                                           FROM Equipment_Maintenance_Item__c  
+                                                           WHERE Maintenance_Request__c IN :lstAutoCases.keySet() ]; 
+        List<Equipment_Maintenance_Item__c> newEquipment = new List<Equipment_Maintenance_Item__c>();
+        
+               
+        /*Recorro los registros de los detalles de la solicitud (Producto) 
+          Equipment_Maintenance_Item__c 
+          Inserto un nuevo detalle de la solicitud a la solicitud de manteniemiento creada anteriormente 
+          Con los valores de detalles de la solicitud asociado al caso viejo que sus estado fue cambiado a "Closed"*/
+        
+        for (Equipment_Maintenance_Item__c eq : oldEquipment) {
+            if(lstAutoCases.get(eq.Maintenance_Request__c)!= null) {
+                Equipment_Maintenance_Item__c newEq = new Equipment_Maintenance_Item__c(); 
+                newEq.Equipment__c = eq.Equipment__c; 
+                newEq.Quantity__c = eq.Quantity__c; 
+                newEq.Maintenance_Request__c = lstAutoCases.get(eq.Maintenance_Request__c).Id;
+                newEquipment.add(newEq);
+            }   
+        }
+        System.debug('Va por ACa!!!'+newEquipment); 
+        insert newEquipment;  
+        
+    }    
+
+}public with sharing class MaintenanceRequestHelper {
+    
+    public static void updateWorkOrders(Map<Id,Case> newCases, Map<Id,Case> oldCases) {
+        Map<Id,Case> lstCasesClosed = new Map<Id,Case>();
+                
+        for(Case c: newCases.values()){
+            if(oldCases != null && oldCases.get(c.Id) != null && c.Status != oldCases.get(c.Id).Status && c.Status == 'Closed'){
+                lstCasesClosed.put(c.Id, c);
+            }
+        }
+        
+        AggregateResult[] mins = [SELECT Maintenance_Request__c, MIN(Equipment__r.Maintenance_Cycle__c) Minimun 
+                                  FROM Equipment_Maintenance_Item__c 
+                                  WHERE Maintenance_Request__c IN:lstCasesClosed.keySet() 
+                                  GROUP BY Maintenance_Request__c];
+        
+        Map<Id,Case> lstAutoCases = new Map<Id,Case>();
+        for(AggregateResult min : mins){
+            Case newAutoCase = new Case();
+            newAutoCase.Type = 'Routine Maintenance'; 
+            newAutoCase.Status = 'New'; 
+            newAutoCase.Subject = 'Automatic Case Schedule'; 
+            newAutoCase.Date_Reported__c = System.today(); 
+            newAutoCase.Date_Due__c = System.today().addDays(Integer.valueOf(min.get('Minimun'))); 
+            newAutoCase.Vehicle__c = lstCasesClosed.get(String.valueOf(min.get('Maintenance_Request__c'))).Vehicle__c; 
+            newAutoCase.Priority = 'Medium';   
+            lstAutoCases.put(lstCasesClosed.get(String.valueOf(min.get('Maintenance_Request__c'))).Id,newAutoCase);
+        }
+        
+        //inserto el nuevo caso
+        if(lstAutoCases != null && lstAutoCases.values().size() > 0){
+           insert lstAutoCases.values();
+        }
+        
+        List<Equipment_Maintenance_Item__c> oldEquipment = [SELECT Equipment__c, Maintenance_Request__c, Quantity__c 
+                                                           FROM Equipment_Maintenance_Item__c  
+                                                           WHERE Maintenance_Request__c IN :lstAutoCases.keySet() ]; 
+        List<Equipment_Maintenance_Item__c> newEquipment = new List<Equipment_Maintenance_Item__c>();
+        
+               
+        /*Recorro los registros de los detalles de la solicitud (Producto) 
+          Equipment_Maintenance_Item__c 
+          Inserto un nuevo detalle de la solicitud a la solicitud de manteniemiento creada anteriormente 
+          Con los valores de detalles de la solicitud asociado al caso viejo que sus estado fue cambiado a "Closed"*/
+        
+        for (Equipment_Maintenance_Item__c eq : oldEquipment) {
+            if(lstAutoCases.get(eq.Maintenance_Request__c)!= null) {
+                Equipment_Maintenance_Item__c newEq = new Equipment_Maintenance_Item__c(); 
+                newEq.Equipment__c = eq.Equipment__c; 
+                newEq.Quantity__c = eq.Quantity__c; 
+                newEq.Maintenance_Request__c = lstAutoCases.get(eq.Maintenance_Request__c).Id;
+                newEquipment.add(newEq);
+            }   
+        }
+        System.debug('Va por ACa!!!'+newEquipment); 
+        insert newEquipment;  
+        
+    }    
+
+}
