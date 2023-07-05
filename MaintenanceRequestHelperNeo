@@ -1,4 +1,4 @@
-public with sharing class MaintenanceRequestHelper {
+public with sharing class MaintenanceRequestHelperNeo {
     
     public static void updateWorkOrders(Map<Id,Case> newCases, Map<Id,Case> oldCases) {
         Map<Id,Case> lstCasesClosed = new Map<Id,Case>();
