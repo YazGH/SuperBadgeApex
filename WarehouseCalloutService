@@ -1,5 +1,5 @@
 public with sharing class WarehouseCalloutService {
-
+	//En esta URL hay datos de prueba que se insertaran en el sistema
     private static final String WAREHOUSE_URL = 'https://th-superbadge-apex.herokuapp.com/equipment';
     
     //@future(callout=true)
@@ -17,7 +17,7 @@ public with sharing class WarehouseCalloutService {
         if (response.getStatusCode() == 200){
             List<Object> results = (List<Object>)JSON.deserializeUntyped(response.getBody());
             //System.debug(response.getBody());
-            
+            //Mapea los campos, los convierte e inserta los productos/partes al sistema
             for (Object i : results){
                 Map<String, Object> j = (Map<String, Object>) i;
                 Product2 newEQT = new Product2();
