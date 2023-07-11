@@ -1,0 +1,15 @@
+@isTest
+private class WarehouseCalloutServiceTest {
+    @isTest static void testWareHouseCallout() {
+        // Create the mock response based on a static resource
+        WarehouseCalloutServiceMock mock = new WarehouseCalloutServiceMock();
+        
+        // Associate the callout with a mock response
+        Test.startTest();
+        Test.setMock(HttpCalloutMock.class, mock);
+        WarehouseCalloutService.runWarehouseEquipmentSync();
+        Test.stopTest();
+        System.assertEquals(1, [SELECT count() FROM Product2]);
+    }
+
+}
