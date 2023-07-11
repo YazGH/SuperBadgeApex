@@ -1,24 +1,30 @@
 public with sharing class MaintenanceRequestHelper {
+    /*Llega por parametro desde el trigger la lista de Casos actualizados*/
     public static void updateworkOrders(List<Case> listofCase) {
         
         List<Id> listofId = new List<Id>();
         
+        /*Aqui se evalua que esa lista tenga tipo igual a 'Repair' o 'Routine Maintenance' y estado 'Cerrado' */
         for (Case i : listofCase){
             if ((i.Type.equals('Repair') || i.Type.equals('Routine Maintenance')) && i.IsClosed){
                 listofId.add(i.Id);
             }
         }
         
-        if (!listofId.isEmpty()){
+        if (!listofId.isEmpty()){//Valida que la lista no este vacia para continuar
             List<Case> newCases = new List<Case>();
+            //Crea un mapa de casos con los campos necesarios tanto de casos como de los items de
+            //mantenimiento y que ademas esten en la lista de los cambios y que cumplan las condiciones
+            //anteriores
             Map<Id, Case> cCases = new Map<Id,Case>(
                 [SELECT Id, Vehicle__c, 
                  	(SELECT Id, Equipment__c,Equipment__r.Maintenance_Cycle__c, Quantity__c                                                             
                   	 FROM Equipment_Maintenance_Items__r) 
                  FROM Case 
                  WHERE Id IN :listofId]);
-            Map<Id, Decimal> mtCycles = new Map<ID, Decimal>();
             
+            //Se hace un query para encontrar la parte que tenga el ciclo de mantenimiento mas corto
+            Map<Id, Decimal> mtCycles = new Map<ID, Decimal>();
             AggregateResult[] results = [SELECT Maintenance_Request__c, MIN(Equipment__r.Maintenance_Cycle__c)cycle 
                                          FROM Equipment_Maintenance_Item__c 
                                          WHERE Maintenance_Request__c IN :listofId 
@@ -28,6 +34,8 @@ public with sharing class MaintenanceRequestHelper {
                 mtCycles.put((Id) j.get('Maintenance_Request__c'), (Decimal) j.get('cycle'));
             }
             
+            //Se recorre el mapa anterior para crear nuevos casos, basicamente tienen la misma información del
+            //caso que cierra solo que algunos campos distintos como la fecha de Date_Due__c
             for(Case k : cCases.values()){
                 Case createCase = new Case (
                     Status = 'New',
@@ -47,6 +55,8 @@ public with sharing class MaintenanceRequestHelper {
             
             insert newCases;
             
+            //Crea tambien nuevos registros en el objeto de items de mantenimiento que es la relación entre los casos,
+            //los vehiculos y los productos o piezas de mantenimiento
             List<Equipment_Maintenance_Item__c> copyEQT = new List<Equipment_Maintenance_Item__c>();
             for (Case z : newCases){
                 for (Equipment_Maintenance_Item__c q : cCases.get(z.ParentId).Equipment_Maintenance_Items__r){
