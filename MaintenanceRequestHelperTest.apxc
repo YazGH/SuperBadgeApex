@@ -1,16 +1,15 @@
 @isTest
 public with sharing class MaintenanceRequestHelperTest {
-    // implement scheduled code here
-    
-    private static final String STATUS_NEW 		  = 'New';
-    private static final String REPAIR 			    = 'Repair';
-    private static final String WORKING 		    = 'Working';
-    private static final String CLOSED 			    = 'Closed';
-    private static final String REQUEST_TYPE 	  = 'Routine Maintenance';
+    //Se definen los estados y tipos de los casos      
+    private static final String STATUS_NEW 		= 'New';
+    private static final String REPAIR 			= 'Repair';
+    private static final String WORKING 		= 'Working';
+    private static final String CLOSED 			= 'Closed';
+    private static final String REQUEST_TYPE 	= 'Routine Maintenance';
     private static final String REQUEST_ORIGIN 	= 'Web';
     private static final String REQUEST_SUBJECT = 'Subject_Test';
 
-
+    //Se crea un nuevo producto o pieza
     private static Product2 cEquipment() {
         product2 e = new product2(name = 'Equipment_Test',
                                          lifespan_months__c = 10,
@@ -18,12 +17,14 @@ public with sharing class MaintenanceRequestHelperTest {
                                          replacement_part__c = true);
         return e;
     }
-        
+    
+	//Se crea un nuevo vehiculo    
     private static Vehicle__c cVehicle() {
 		Vehicle__c v = new Vehicle__c(name = 'Vehicle_Test');
         return v;
     }
     
+    //Se crea un nuevo caso
     private static Case cMTRequest(id vId, id eId) {
         case c = new case(Vehicle__c = vId,
                           Type = REPAIR,
@@ -33,6 +34,7 @@ public with sharing class MaintenanceRequestHelperTest {
         return c;
     }
     
+    //Se crea un nuevo item de mantenimiento (Casos x productos/piezas)
     private static Equipment_Maintenance_Item__c createWorkPart(id eId, id rId) {
         Equipment_Maintenance_Item__c EQT = new Equipment_Maintenance_Item__c(Equipment__c = eId,
                                                                              Maintenance_request__c = rId);
@@ -41,6 +43,7 @@ public with sharing class MaintenanceRequestHelperTest {
     
     
     @isTest
+    //Prueba positiva, cambia el estado del caso a CLOSED, que es cuando se ejecuta el trigger
     private static void testMaintenanceRequestPositive() {
         Product2 e = cEquipment();
         insert e;
@@ -77,6 +80,7 @@ public with sharing class MaintenanceRequestHelperTest {
     }
     
     @istest
+    //Prueba Negativa, cambia el estado del caso a WORKING ahi no debería dispararse el trigger
     private static void testMaintenanceRequestNegative(){
         Product2 e = cEquipment();
         insert e;
@@ -108,6 +112,7 @@ public with sharing class MaintenanceRequestHelperTest {
     }
     
     @isTest
+    //Prueba con inserción masiva 300 casos, los actualiza a CLOSED, que es cuando se ejecuta el trigger
     private static void testMaintenanceRequestBulk(){
         
         list<Vehicle__C> listOfV = new list<Vehicle__C>();
