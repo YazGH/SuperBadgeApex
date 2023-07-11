@@ -1,3 +1,4 @@
+/*Trigger que se ejecuta antes y despues de actualizar un Caso*/
 trigger MaintenanceRequest on Case (before update, after update) {
     if(Trigger.isUpdate && Trigger.isAfter){
         MaintenanceRequestHelper.updateWorkOrders(Trigger.New);
